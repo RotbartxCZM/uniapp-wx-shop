@@ -1,5 +1,6 @@
 import { http } from '@/utils/http'
-import './home.d'
+import type { GuessItem, HomeBanner, HomeMutli, HotPanels } from '../types/home'
+import type { PageResult } from '@/types/global'
 /**
  *
  * 首页-广告区域
@@ -25,5 +26,23 @@ export const getHomeMutliApi = () => {
   return http<HomeMutli>({
     method: 'GET',
     url: '/home/category/mutli',
+  })
+}
+/**
+ * 首页-热门推荐-小程序
+ */
+export const getHotPanelApi = () => {
+  return http<HotPanels>({
+    method: 'GET',
+    url: '/home/hot/mutli',
+  })
+}
+/**
+ * 猜你喜欢-小程序 --- type import
+ */
+export const getGuessLikeApi = () => {
+  return http<PageResult<GuessItem>>({
+    method: 'GET',
+    url: '/home/goods/guessLike',
   })
 }
