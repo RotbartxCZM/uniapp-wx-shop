@@ -3,14 +3,52 @@
 import { getGuessLikeApi } from '@/services/home'
 import { onMounted, ref } from 'vue'
 import type { GuessItem } from '@/types/home'
-// 猜你喜欢数据
+import type { PageParams } from '@/types/global'
+//
+
+// 猜你喜欢数据-列表数据
 const guessLikeList = ref<GuessItem>([])
-const getGuessLikeList = async () => {
-  const res = await getGuessLikeApi()
-  guessLikeList.value = res.result.items
+// 分页参数
+const pageParams: Required<PageParams> = {
+  page: 30,
+  pageSize: 10,
 }
+const finish = ref(false)
+const getGuessLikeList = async () => {
+  if (finish.value === true) {
+    return uni.showToast({
+      title: '没有更多数据了~~',
+      icon: 'none',
+      mask: true,
+    })
+  }
+  const res = await getGuessLikeApi(pageParams)
+  // 数组追加
+  guessLikeList.value.push(...res.result.items)
+  // 页面累加(后端数据就35页)
+  if (pageParams.page < res.result.pages) {
+    pageParams.page++
+  } else {
+    finish.value = true
+  }
+}
+
+// 下拉刷新函数
+const resetData = () => {
+  // 重置数据，更新列表
+  pageParams.page = 1
+  finish.value = false
+  guessLikeList.value = []
+}
+
 onMounted(() => {
   getGuessLikeList()
+})
+
+// 暴露方法
+defineExpose({
+  getMore: getGuessLikeList,
+  resetData,
 })
 </script>
 
@@ -34,7 +72,7 @@ onMounted(() => {
       </view>
     </navigator>
   </view>
-  <view class="loading-text"> 正在加载... </view>
+  <view class="loading-text">{{ finish ? '没有更多数据了~~' : '正在加载...' }}</view>
 </template>
 
 <style lang="scss">
