@@ -33,7 +33,6 @@ const getHotPanel = async () => {
 const gusseRef = ref<XtxGuessInstance>()
 const onScrolltolower = () => {
   gusseRef.value?.getMore()
-  console.log('底')
 }
 
 // 下拉刷新
