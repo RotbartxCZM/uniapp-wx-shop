@@ -20,11 +20,15 @@ const currUrlMap = hotMap.find((item) => item.type === query.type)
 uni.setNavigationBarTitle({ title: currUrlMap!.title })
 
 // 全部列表数据
-const hotList = ref<SubTypeItem>([])
+const hotList = ref<SubTypeItem & { finsh?: boolean }>([])
 // 轮播图
 const bannerPicture = ref('')
 const getHotRecommendList = async () => {
-  const res = await getHotRecommendAPI(currUrlMap!.url)
+  const res = await getHotRecommendAPI(currUrlMap!.url, {
+    // 初始值，开发环境方便调试设为30
+    page: import.meta.env.DEV ? 30 : 1,
+    pageSize: 10,
+  })
   // 获取轮播图图片
   bannerPicture.value = res.result.bannerPicture
   // 获取总数据列表
@@ -33,11 +37,24 @@ const getHotRecommendList = async () => {
 // 高亮的响应式数据
 const activeIndex = ref(0)
 
+// 结束标记
+const finsh = ref(false)
 // 滚动到底
 const onScrolltolower = async () => {
   // 获取当前选项 -- 传数据
   const tabType = hotList.value[activeIndex.value]
-  tabType.goodsItems.page++
+  // 分页条件
+  if (tabType.goodsItems.page < tabType.goodsItems.pages) {
+    // 页码累加
+    tabType.goodsItems.page++
+  } else {
+    finsh.value = true
+    return uni.showToast({
+      icon: 'none',
+      title: '没有更多数据了~',
+      mask: true,
+    })
+  }
   const res = await getHotRecommendAPI(currUrlMap!.url, {
     subType: tabType.id,
     page: tabType.goodsItems.page,
@@ -96,7 +113,7 @@ onLoad(() => {
           </view>
         </navigator>
       </view>
-      <view class="loading-text">正在加载...</view>
+      <view class="loading-text">{{ finsh ? '没有更多数据了~' : '正在加载...' }}</view>
     </scroll-view>
   </view>
 </template>
