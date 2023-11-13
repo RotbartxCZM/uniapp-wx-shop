@@ -21,6 +21,7 @@
     {
       "path": "pages/my/my",
       "style": {
+        "navigationStyle": "custom",
         "navigationBarTitleText": "我的"
       }
     },
@@ -93,5 +94,27 @@
         "selectedIconPath": "static/tabs/user_selected.png"
       }
     ]
+  },
+  // 配置分包的加载规则
+  "subPackages": [
+    {
+      "root": "pagesMember",
+      "pages": [
+        {
+          "path": "settings/settings",
+          "style": {
+            "navigationBarTitleText": "设置"
+          }
+        }
+      ]
+    }
+  ],
+  "preloadRule": {
+    "pages/my/my": {
+      "network": "all",
+      "packages": [
+        "pagesMember"
+      ]
+    }
   }
 }

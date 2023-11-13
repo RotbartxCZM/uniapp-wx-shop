@@ -6,8 +6,8 @@ import type { HomeBanner, HomeMutli, HotPanels } from '@/types/home'
 import CustomNavbar from './components/CustomNavbar.vue'
 import CategoryPanel from './components/CategoryPanel.vue'
 import HotPanel from './components/HotPanel.vue'
-import type { XtxGuessInstance } from '@/types/component'
 import PageSkeleton from './components/PageSkeleton.vue'
+import { useGuessList } from '@/composables'
 // 轮播图渲染数据
 const bannerList = ref<HomeBanner>([])
 const getHomeBannerData = async () => {
@@ -29,11 +29,13 @@ const getHotPanel = async () => {
   hotPanelList.value = res.result
 }
 
-// 滚动触底
-const gusseRef = ref<XtxGuessInstance>()
-const onScrolltolower = () => {
-  gusseRef.value?.getMore()
-}
+// // 滚动触底
+// const gusseRef = ref<XtxGuessInstance>()
+// const onScrolltolower = () => {
+//   gusseRef.value?.getMore()
+// }
+// 调用组合式函数
+const { guessRef, onScrolltolower } = useGuessList()
 
 // 下拉刷新
 const isTrigger = ref(false)
@@ -49,8 +51,8 @@ const onRefresherrefresh = async () => {
   //   console.log('计时开始')
   // }, 2000)
   // 重置猜你喜欢页面数据
-  gusseRef.value?.resetData()
-  await Promise.all([getHomeBannerData(), getHomeMutil(), getHotPanel(), gusseRef.value?.getMore()])
+  guessRef.value?.resetData()
+  await Promise.all([getHomeBannerData(), getHomeMutil(), getHotPanel(), guessRef.value?.getMore()])
   isTrigger.value = false
 }
 
@@ -80,7 +82,7 @@ onLoad(async () => {
       <XtxSwiper :list="bannerList" />
       <CategoryPanel :list="mutilList" />
       <HotPanel :list="hotPanelList" />
-      <XtxGuess ref="gusseRef" />
+      <XtxGuess ref="guessRef" />
     </template>
   </scroll-view>
 </template>
