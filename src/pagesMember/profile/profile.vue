@@ -3,14 +3,53 @@ import { getMemberProfileAPI } from '@/services/profile'
 import type { ProfileDetail } from '@/types/profile'
 import { onLoad } from '@dcloudio/uni-app'
 import { ref } from 'vue'
+import { useMemberStore } from '@/stores'
 
 // 获取屏幕边界到安全区域距离
 const { safeAreaInsets } = uni.getSystemInfoSync()
+// 获取用户信息
 const memberList = ref<ProfileDetail>()
 const getMemberList = async () => {
   const res = await getMemberProfileAPI()
   memberList.value = res.result
-  console.log(memberList.value)
+}
+
+// 修改头像
+const onAvatarChange = () => {
+  uni.chooseMedia({
+    count: 1,
+    mediaType: ['image'],
+    success: (res) => {
+      // 本地路径
+      const { tempFilePath } = res.tempFiles[0]
+      // 文件上传 -- 通过uni方法直接上传，返回一个json对象需要转换
+      uni.uploadFile({
+        url: '/member/profile/avatar',
+        name: 'file', // 后端数据字段名
+        filePath: tempFilePath,
+        success: (res) => {
+          if (res.statusCode === 200) {
+            // 将微信后台返回的json转换为对象
+            const avatar = JSON.parse(res.data).result.avatar
+            // 更改头像，渲染数据
+            memberList.value!.avatar = avatar
+            // 更新成功提示
+            uni.showToast({
+              title: '更新成功！',
+              icon: 'success',
+              mask: true,
+            })
+          } else {
+            uni.showToast({
+              title: '上传失败！',
+              icon: 'error',
+              mask: true,
+            })
+          }
+        },
+      })
+    },
+  })
 }
 onLoad(() => {
   getMemberList()
@@ -26,7 +65,7 @@ onLoad(() => {
     </view>
     <!-- 头像 -->
     <view class="avatar">
-      <view class="avatar-content">
+      <view class="avatar-content" @tap="onAvatarChange">
         <image class="image" :src="memberList?.avatar" mode="aspectFill" />
         <text class="text">点击修改头像</text>
       </view>
