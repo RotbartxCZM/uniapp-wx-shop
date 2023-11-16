@@ -1,14 +1,16 @@
 <script setup lang="ts">
-import { getMemberProfileAPI } from '@/services/profile'
-import type { ProfileDetail } from '@/types/profile'
+import { getMemberProfileAPI, putMemberProfileAPI } from '@/services/profile'
+import type { Gender, ProfileDetail } from '@/types/profile'
 import { onLoad } from '@dcloudio/uni-app'
 import { ref } from 'vue'
 import { useMemberStore } from '@/stores'
 
+// 实例化store
+const memberStore = useMemberStore()
 // 获取屏幕边界到安全区域距离
 const { safeAreaInsets } = uni.getSystemInfoSync()
 // 获取用户信息
-const memberList = ref<ProfileDetail>()
+const memberList = ref({} as ProfileDetail)
 const getMemberList = async () => {
   const res = await getMemberProfileAPI()
   memberList.value = res.result
@@ -33,6 +35,8 @@ const onAvatarChange = () => {
             const avatar = JSON.parse(res.data).result.avatar
             // 更改头像，渲染数据
             memberList.value!.avatar = avatar
+            // // 更改store中数据   -- 不规范
+            // memberStore.profile!.avatar = memberList.value.avatar
             // 更新成功提示
             uni.showToast({
               title: '更新成功！',
@@ -51,6 +55,49 @@ const onAvatarChange = () => {
     },
   })
 }
+
+// 修改生日
+const onBirthdayChange: UniHelper.DatePickerOnChange = (ev) => {
+  memberList.value.birthday = ev.detail.value
+}
+// 修改性别
+const onGenderChange: UniHelper.RadioGroupOnChange = (ev) => {
+  memberList.value.gender = ev.detail.value as Gender
+}
+
+// 修改城市
+let fullLocationCode: [string, string, string] = ['', '', '']
+const onFullLocationChange: UniHelper.RegionPickerOnChange = (ev) => {
+  memberList.value.fullLocation = ev.detail.value.join(' ')
+  // 将编码保存用于后端请求
+  fullLocationCode = ev.detail.code!
+}
+// 提交按钮
+const saveProfile = async () => {
+  // 解构需要请求的字段
+  const { nickname, gender, birthday, profession } = memberList.value
+  const res = await putMemberProfileAPI({
+    nickname,
+    gender,
+    birthday,
+    profession,
+    provinceCode: fullLocationCode[0],
+    cityCode: fullLocationCode[1],
+    countyCode: fullLocationCode[2],
+  })
+  // 因为保存成功回跳转至"我的"页面,所以只需改变store的nickname和头像,store没有地址信息
+  memberStore.profile!.nickname = memberList.value.nickname
+  memberStore.profile!.avatar = memberList.value.avatar
+  // 提示保存成功并跳转
+  uni.showToast({
+    icon: 'success',
+    title: '保存成功',
+  })
+  setTimeout(() => {
+    uni.navigateBack()
+  }, 300)
+}
+
 onLoad(() => {
   getMemberList()
 })
@@ -80,11 +127,16 @@ onLoad(() => {
         </view>
         <view class="form-item">
           <text class="label">昵称</text>
-          <input class="input" type="text" placeholder="请填写昵称" :value="memberList?.nickname" />
+          <input
+            class="input"
+            type="text"
+            placeholder="请填写昵称"
+            v-model="memberList!.nickname"
+          />
         </view>
         <view class="form-item">
           <text class="label">性别</text>
-          <radio-group>
+          <radio-group @change="onGenderChange">
             <label class="radio">
               <radio value="男" color="#27ba9b" :checked="memberList?.gender === '男'" />
               男
@@ -102,15 +154,21 @@ onLoad(() => {
             mode="date"
             start="1900-01-01"
             :end="new Date()"
-            :value="memberList?.birthday"
+            :value="memberList!.birthday"
+            @change="onBirthdayChange"
           >
-            <view v-if="true">{{ memberList?.birthday }}</view>
+            <view v-if="memberList?.birthday">{{ memberList?.birthday }}</view>
             <view class="placeholder" v-else>请选择日期</view>
           </picker>
         </view>
         <view class="form-item">
           <text class="label">城市</text>
-          <picker class="picker" mode="region" :value="memberList?.fullLocation?.split(' ')">
+          <picker
+            class="picker"
+            mode="region"
+            :value="memberList?.fullLocation?.split(' ')"
+            @change="onFullLocationChange"
+          >
             <view v-if="memberList?.fullLocation">{{ memberList.fullLocation }}</view>
             <view class="placeholder" v-else>请选择城市</view>
           </picker>
@@ -121,12 +179,12 @@ onLoad(() => {
             class="input"
             type="text"
             placeholder="请填写职业"
-            :value="memberList?.profession"
+            v-model="memberList!.profession"
           />
         </view>
       </view>
       <!-- 提交按钮 -->
-      <button class="form-button">保 存</button>
+      <button class="form-button" @tap="saveProfile">保 存</button>
     </view>
   </view>
 </template>

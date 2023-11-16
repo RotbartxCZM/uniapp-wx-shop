@@ -9,11 +9,10 @@ export const useMemberStore = defineStore(
     // 会员信息
     const profile = ref<LoginResult>()
 
-    // 保存会员信息，登录时使用
+    // 保存或修改会员信息，登录时使用
     const setProfile = (val: LoginResult) => {
       profile.value = val
     }
-
     // 清理会员信息，退出时使用
     const clearProfile = () => {
       profile.value = undefined
