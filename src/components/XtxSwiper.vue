@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { HomeBanner } from '@/types/home'
 import { ref } from 'vue'
 
 const activeIndex = ref(0)

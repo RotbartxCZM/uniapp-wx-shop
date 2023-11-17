@@ -111,6 +111,19 @@
           "style": {
             "navigationBarTitleText": "个人信息页"
           }
+        },
+        {
+          "path": "address/address",
+          "style": {
+            "navigationBarTitleText": "地址管理"
+          }
+        },
+        {
+          "path": "address-form/address-form",
+          "style": {
+            // 动态设置
+            "navigationBarTitleText": ""
+          }
         }
       ]
     }
