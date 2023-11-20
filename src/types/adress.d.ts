@@ -1,7 +1,9 @@
+import type { AddressItem } from './goods'
+
 /**
- * empty object，收货地址：请求体参数
+ * empty object，收货地址：请求体参数 -- 对象
  */
-export type AdressParams = {
+export type AddressParams = {
   /**
    * 详细地址
    */
@@ -33,8 +35,6 @@ export type AdressParams = {
 }
 
 /**
- * 获取收货地址详情
+ * 获取收货地址详情 -- 对象形式的数组
  */
-export type AdressForm = {
-  fullLocation: string
-} & AdressParams
+export type AddressForm = AddressItem
