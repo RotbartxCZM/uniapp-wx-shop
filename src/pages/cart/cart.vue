@@ -10,7 +10,7 @@
       :localdata="goodsInfo"
       :mode="skuMode"
       @open="onOpenSkuPopup"
-      @close="onCloseSkuPopup"
+      @close="SkuPopup"
       @add-cart="addCart"
       @buy-now="buyNow"
     ></vk-data-goods-sku-popup>
@@ -18,6 +18,7 @@
 </template>
 
 <script>
+/* eslint-disable */
 var that // 当前页面对象
 export default {
   data() {
@@ -96,7 +97,7 @@ export default {
     onOpenSkuPopup() {
       console.log('监听 - 打开sku组件')
     },
-    onCloseSkuPopup() {
+    SkuPopup() {
       console.log('监听 - 关闭sku组件')
     },
     // 加入购物车前的判断
