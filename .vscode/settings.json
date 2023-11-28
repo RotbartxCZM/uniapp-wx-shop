@@ -3,7 +3,7 @@
   "editor.formatOnSave": false,
   // 文件格式化配置
   "[json]": {
-    // "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   // 配置语言的文件关联
   "files.associations": {
