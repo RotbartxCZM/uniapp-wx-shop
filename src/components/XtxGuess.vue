@@ -13,6 +13,7 @@ const pageParams: Required<PageParams> = {
   page: 30,
   pageSize: 10,
 }
+// 触底更新
 const finish = ref(false)
 const getGuessLikeList = async () => {
   if (finish.value === true) {
@@ -47,6 +48,7 @@ onMounted(() => {
 
 // 暴露方法
 defineExpose({
+  /* 触底更新 */
   getMore: getGuessLikeList,
   resetData,
 })
@@ -62,7 +64,7 @@ defineExpose({
       class="guess-item"
       v-for="item in guessLikeList"
       :key="item.id"
-      :url="`/pages/goods/goods?id${item.id}`"
+      :url="`/pages/goods/goods?id=${item.id}`"
     >
       <image class="image" mode="aspectFill" :src="item.picture"></image>
       <view class="name"> {{ item.name }} </view>
