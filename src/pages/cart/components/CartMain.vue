@@ -100,6 +100,19 @@ const { safeAreaInsets } = uni.getSystemInfoSync()
 const isShowSafe = defineProps<{
   isShow?: boolean
 }>()
+
+// 去结算跳转
+const goPayment = () => {
+  if (selectedCartListCount.value === 0) {
+    uni.showToast({
+      icon: 'none',
+      title: '请选择商品',
+    })
+  }
+  uni.navigateTo({
+    url: '/pagesOrder/create/create',
+  })
+}
 </script>
 
 <template>
@@ -175,7 +188,11 @@ const isShowSafe = defineProps<{
         <text class="text">合计:</text>
         <text class="amount">{{ selectedCartListMoney.toFixed(2) }}</text>
         <view class="button-grounp">
-          <view class="button payment-button" :class="{ disabled: selectedCartListCount === 0 }">
+          <view
+            class="button payment-button"
+            :class="{ disabled: selectedCartListCount === 0 }"
+            @tap="goPayment"
+          >
             去结算({{ selectedCartListCount }})
           </view>
         </view>

@@ -234,11 +234,6 @@ const onAddCart = async (ev: SkuPopupEvent) => {
     </uni-popup>
   </view>
   <PageSkeleton v-else />
-  <!-- 弹出层
-  <uni-popup ref="popup" background-color="#fff">
-    <AddressPanel v-if="popName === 'adress'" @close="popup?.close" />
-    <ServicePanel v-if="popName === 'service'" @close="popup?.close" />
-  </uni-popup> -->
 </template>
 
 <style lang="scss">

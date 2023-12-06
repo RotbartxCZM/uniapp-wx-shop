@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { deleteMemberAddressByIdAPI, getMemberAddressAPI } from '@/services/adress'
+import { userAddressStore } from '@/stores/modules/address'
 import type { AddressForm } from '@/types/adress'
+import type { AddressItems } from '@/types/goods'
 import { onShow } from '@dcloudio/uni-app'
 import { ref } from 'vue'
 
@@ -10,20 +12,6 @@ const getMemberList = async () => {
   const res = await getMemberAddressAPI()
   memberList.value = res.result
 }
-// const options2 = ref([
-//   {
-//     text: '取消',
-//     style: {
-//       backgroundColor: '#007aff',
-//     },
-//   },
-//   {
-//     text: '确认',
-//     style: {
-//       backgroundColor: '#F56C6C',
-//     },
-//   },
-// ])
 
 const onDeleteAddress = (id: string) => {
   // 二次确认
@@ -43,6 +31,13 @@ const onDeleteAddress = (id: string) => {
 onShow(() => {
   getMemberList()
 })
+
+// 修改收获地址的函数
+const onChangeAdress = (item: AddressItems) => {
+  const addressStore = userAddressStore()
+  addressStore.changeSelectedAddress(item)
+  uni.navigateBack()
+}
 </script>
 
 <template>
@@ -53,17 +48,19 @@ onShow(() => {
         <uni-swipe-action class="address-list">
           <!-- 收货地址项 -->
           <uni-swipe-action-item class="item" v-for="item in memberList" :key="item.id">
-            <view class="item-content">
+            <view class="item-content" @tap="onChangeAdress(item)">
               <view class="user">
                 {{ item.receiver }}
                 <text class="contact">{{ item.contact }}</text>
                 <text v-if="item.isDefault === 1" class="badge">默认</text>
               </view>
               <view class="locate">{{ item.fullLocation }} {{ item.address }}</view>
+              <!-- 阻止冒泡 -->
               <navigator
                 class="edit"
                 hover-class="none"
                 :url="`/pagesMember/address-form/address-form?id=${item.id}`"
+                @tap.stop="() => {}"
               >
                 修改
               </navigator>
