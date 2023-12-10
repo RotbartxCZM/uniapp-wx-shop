@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { getGoodsByIdAPI } from '@/services/goods'
-import type { GoodsResult } from '@/types/goods'
+import type { AddressItems, GoodsResult } from '@/types/goods'
 import { onLoad } from '@dcloudio/uni-app'
-import { computed, ref } from 'vue'
+import { computed, nextTick, onMounted, ref } from 'vue'
 import AddressPanel from './components/AddressPanel.vue'
 import ServicePanel from './components/ServicePanel.vue'
 import PageSkeleton from './components/PageSkeleton.vue'
@@ -12,6 +12,7 @@ import type {
   SkuPopupLocaldata,
 } from '@/components/vk-data-goods-sku-popup/vk-data-goods-sku-popup'
 import { postMemberCartAPI } from '@/services/cart'
+import { userAddressStore } from '@/stores/modules/address'
 // 获取屏幕边界到安全区域距离
 const { safeAreaInsets } = uni.getSystemInfoSync()
 
@@ -102,6 +103,12 @@ const onAddCart = async (ev: SkuPopupEvent) => {
   uni.showToast({ title: '添加成功' })
   isShowSku.value = false
 }
+// 立即购买 -- ev选中商品的属性
+const onBuyNow = (ev: SkuPopupEvent) => {
+  uni.navigateTo({ url: `/pagesOrder/create/create?skuId=${ev._id}&count=${ev.buy_num}` })
+}
+// 获取选中的地址
+const addressStore = userAddressStore()
 </script>
 
 <template>
@@ -118,6 +125,7 @@ const onAddCart = async (ev: SkuPopupEvent) => {
       backgroundColor: '#E9F8F5',
     }"
     @add-cart="onAddCart"
+    @buy-now="onBuyNow"
   />
   <view v-if="finsh" class="vport">
     <!-- 滚动区 -->
@@ -156,7 +164,14 @@ const onAddCart = async (ev: SkuPopupEvent) => {
           </view>
           <view class="item arrow" @tap="openPop('adress')">
             <text class="label">送至</text>
-            <text class="text ellipsis"> 请选择收获地址 </text>
+            <text class="text ellipsis">
+              {{
+                addressStore.selectedAddress?.fullLocation
+                  ? addressStore.selectedAddress?.fullLocation
+                  : '请选择收货地址'
+              }}
+              {{ addressStore.selectedAddress?.address }}
+            </text>
           </view>
           <view class="item arrow" @tap="openPop('service')">
             <text class="label">服务</text>

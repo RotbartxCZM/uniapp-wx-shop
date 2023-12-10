@@ -1,10 +1,39 @@
 <script setup lang="ts">
+import { getMemberAddressAPI } from '@/services/adress'
+import { userAddressStore } from '@/stores/modules/address'
+import type { AddressItem, AddressItems } from '@/types/goods'
+import { onMounted, ref } from 'vue'
+
 //
 // 子调父
 const emits = defineEmits<{
   // 3.3新语法
   close: []
 }>()
+
+// 获取地址列表
+// const addressStore = userAddressStore()
+const memberList = ref<AddressItem>([])
+const getMemberList = async () => {
+  const res = await getMemberAddressAPI()
+  memberList.value = res.result
+}
+const activeIndex = ref(0)
+// 确认地址 -- 存入store
+const addressStore = userAddressStore()
+const selectAdress = ref<AddressItems>()
+const OnSelectAdress = () => {
+  selectAdress.value = memberList.value[activeIndex.value]
+  addressStore.changeSelectedAddress(selectAdress.value)
+  emits('close')
+}
+// 跳转新建地址
+const newAddress = () => {
+  uni.navigateTo({ url: 'pagesMember/address-form/address-form' })
+}
+onMounted(() => {
+  getMemberList()
+})
 </script>
 
 <template>
@@ -15,25 +44,18 @@ const emits = defineEmits<{
     <view class="title">配送至</view>
     <!-- 内容 -->
     <view class="content">
-      <view class="item">
-        <view class="user">李明 13824686868</view>
-        <view class="address">北京市顺义区后沙峪地区安平北街6号院</view>
-        <text class="icon icon-checked"></text>
-      </view>
-      <view class="item">
-        <view class="user">王东 13824686868</view>
-        <view class="address">北京市顺义区后沙峪地区安平北街6号院</view>
-        <text class="icon icon-ring"></text>
-      </view>
-      <view class="item">
-        <view class="user">张三 13824686868</view>
-        <view class="address">北京市朝阳区孙河安平北街6号院</view>
-        <text class="icon icon-ring"></text>
+      <view class="item" v-for="(item, index) in memberList" :key="item.id">
+        <view class="user">{{ item.receiver }} {{ item.contact }}</view>
+        <view class="address">{{ item.fullLocation }} {{ item.address }}</view>
+        <text
+          :class="activeIndex === index ? 'icon icon-checked' : 'icon icon-ring'"
+          @tap="activeIndex = index"
+        ></text>
       </view>
     </view>
     <view class="footer">
-      <view class="button primary"> 新建地址 </view>
-      <view v-if="false" class="button primary">确定</view>
+      <view v-if="memberList" class="button primary" @tap="OnSelectAdress">确定</view>
+      <view class="button primary" v-else @tap="newAddress"> 新建地址 </view>
     </view>
   </view>
 </template>

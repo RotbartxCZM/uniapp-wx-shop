@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { getMemberOrderPreAPI } from '@/services/order'
+import { getMemberOrderPreAPI, getMemberOrderPreNowAPI, postMemberOrderAPI } from '@/services/order'
 import { userAddressStore } from '@/stores/modules/address'
 import type { OrderPreResult } from '@/types/order'
 import { onLoad } from '@dcloudio/uni-app'
@@ -24,11 +24,25 @@ const onChangeDelivery: UniHelper.SelectorPickerOnChange = (ev) => {
   activeIndex.value = ev.detail.value
 }
 
+// 获取页面参数
+const query = defineProps<{
+  skuId?: string
+  count?: string
+}>()
+
 // 获取购物车订单
 const orderList = ref<OrderPreResult>()
 const getCartList = async () => {
-  const res = await getMemberOrderPreAPI()
-  orderList.value = res.result
+  if (query.count && query.skuId) {
+    const res = await getMemberOrderPreNowAPI({
+      skuId: query.skuId,
+      count: query.count,
+    })
+    orderList.value = res.result
+  } else {
+    const res = await getMemberOrderPreAPI()
+    orderList.value = res.result
+  }
 }
 
 // 购物车中选中或立即购买(传参判别)跳转发请求
@@ -44,6 +58,28 @@ const selectAddress = computed(() => {
     addressStore.selectedAddress || orderList.value?.userAddresses.find((v) => v.isDefault === 1)
   )
 })
+// 提交订单
+const onOrderSubmit = async () => {
+  if (!selectAddress.value?.id) {
+    return uni.showToast({
+      title: '请选择收获地址',
+      icon: 'none',
+    })
+  }
+  const res = await postMemberOrderAPI({
+    addressId: selectAddress.value?.id,
+    deliveryTimeType: activeDelivery.value.type,
+    buyerMessage: buyerMessage.value,
+    goods: orderList.value!.goods.map((item) => ({
+      count: item.count,
+      skuId: item.skuId,
+    })),
+    payChannel: 2,
+    payType: 1,
+  })
+  // 关闭订单页面,不允许重复
+  uni.redirectTo({ url: `/pagesOrder/detail/detail?id=${res.result.id}` })
+}
 </script>
 
 <template>
@@ -128,7 +164,9 @@ const selectAddress = computed(() => {
     <view class="total-pay symbol">
       <text class="number">{{ orderList?.summary.totalPayPrice.toFixed(2) }}</text>
     </view>
-    <view class="button" :class="{ disabled: true }"> 提交订单 </view>
+    <view class="button" :class="{ disabled: !selectAddress?.id }" @tap="onOrderSubmit">
+      提交订单
+    </view>
   </view>
 </template>
 
