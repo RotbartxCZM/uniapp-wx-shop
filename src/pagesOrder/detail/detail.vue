@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { useGuessList } from '@/composables'
+import { getMemberOrderByIdAPI } from '@/services/order'
+import type { OrderResult } from '@/types/order'
+import { onLoad, onReady } from '@dcloudio/uni-app'
 import { ref } from 'vue'
-
+import { OrderState, orderStateList } from '@/services/constants'
+import PageSkeleton from './components/PageSkeleton.vue'
 // 获取屏幕边界到安全区域距离
 const { safeAreaInsets } = uni.getSystemInfoSync()
 // 猜你喜欢
@@ -28,27 +32,91 @@ const onCopy = (id: string) => {
 const query = defineProps<{
   id: string
 }>()
+
+// 获取页面栈 - []
+const pages = getCurrentPages()
+// 基于小程序的 Page 实例类型扩展 uni-app 的 Page
+type PageInstance = Page.PageInstance & WechatMiniprogram.Page.InstanceMethods<any>
+// 页面栈最后一项及为当前页面,页面实例
+const pageInstance = pages.at(-1) as PageInstance
+
+// 页面渲染完毕,绑定动画 -- 相当于onMount
+onReady(() => {
+  // 动画效果,导航栏背景色 - 从隐藏到显示
+  pageInstance.animate(
+    '.navbar', // 选择器
+    [{ backgroundColor: 'transparent' }, { backgroundColor: '#f8f8f8' }], // 关键帧信息
+    1000, // 动画持续时长
+    {
+      scrollSource: '#scroller', // scroll-view 的选择器
+      startScrollOffset: 0, // 开始滚动偏移量
+      endScrollOffset: 50, // 停止滚动偏移量
+      timeRange: 1000, // 时间长度
+    },
+  )
+  // title字体变黑
+  pageInstance.animate(
+    '.title', // 选择器
+    [{ color: 'transparent' }, { color: '#000' }], // 关键帧信息
+    1000, // 动画持续时长
+    {
+      scrollSource: '#scroller', // scroll-view 的选择器
+      startScrollOffset: 0, // 开始滚动偏移量
+      endScrollOffset: 50, // 停止滚动偏移量
+      timeRange: 1000, // 时间长度
+    },
+  )
+  // 小图标变黑
+  pageInstance.animate(
+    '.back', // 选择器
+    [{ color: 'transparent' }, { color: '#000' }], // 关键帧信息
+    1000, // 动画持续时长
+    {
+      scrollSource: '#scroller', // scroll-view 的选择器
+      startScrollOffset: 0, // 开始滚动偏移量
+      endScrollOffset: 50, // 停止滚动偏移量
+      timeRange: 1000, // 时间长度
+    },
+  )
+})
+
+// 获取订单详情
+const order = ref<OrderResult>()
+const getOrderById = async () => {
+  const res = await getMemberOrderByIdAPI(query.id)
+  order.value = res.result
+}
+const isShowSkeleton = ref(false)
+onLoad(async () => {
+  isShowSkeleton.value = false
+  await Promise.all([getOrderById()])
+  isShowSkeleton.value = true
+})
 </script>
 
 <template>
   <!-- 自定义导航栏: 默认透明不可见, scroll-view 滚动到 50 时展示 -->
   <view class="navbar" :style="{ paddingTop: safeAreaInsets?.top + 'px' }">
     <view class="wrap">
-      <navigator v-if="true" open-type="navigateBack" class="back icon-left"></navigator>
+      <navigator
+        v-if="pages.length > 1"
+        open-type="navigateBack"
+        class="back icon-left"
+      ></navigator>
       <navigator v-else url="/pages/index/index" open-type="switchTab" class="back icon-home">
       </navigator>
       <view class="title">订单详情</view>
     </view>
   </view>
   <scroll-view scroll-y class="viewport" id="scroller" @scrolltolower="onScrolltolower">
-    <template v-if="true">
+    <template v-if="isShowSkeleton">
       <!-- 订单状态 -->
       <view class="overview" :style="{ paddingTop: safeAreaInsets!.top + 20 + 'px' }">
         <!-- 待付款状态:展示去支付按钮和倒计时 -->
-        <template v-if="true">
+        <template v-if="order?.orderState === OrderState.DaiFuKuan">
           <view class="status icon-clock">等待付款</view>
           <view class="tips">
-            <text class="money">应付金额: ¥ 99.00</text>
+            <text class="money">应付金额: ¥ {{ order.payMoney }}</text>
             <text class="time">支付剩余</text>
             00 时 29 分 59 秒
           </view>
@@ -57,7 +125,7 @@ const query = defineProps<{
         <!-- 其他订单状态:展示再次购买按钮 -->
         <template v-else>
           <!-- 订单状态文字 -->
-          <view class="status"> 待付款 </view>
+          <view class="status"> {{ orderStateList[order!.orderState].text }} </view>
           <view class="button-group">
             <navigator
               class="button"
@@ -82,8 +150,8 @@ const query = defineProps<{
         </view>
         <!-- 用户收货地址 -->
         <view class="locate">
-          <view class="user"> 张三 13333333333 </view>
-          <view class="address"> 广东省 广州市 天河区 黑马程序员 </view>
+          <view class="user">{{ order?.receiverContact }} {{ order?.receiverMobile }}</view>
+          <view class="address">{{ order?.receiverAddress }}</view>
         </view>
       </view>
 
