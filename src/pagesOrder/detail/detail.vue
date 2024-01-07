@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { useGuessList } from '@/composables'
-import { getMemberOrderByIdAPI } from '@/services/order'
+import {
+  getMemberOrderByIdAPI,
+  getMemberOrderConsignmentByIdAPI,
+  getPayMockAPI,
+  getPayWxPayMiniPayAPI,
+  putMemberOrderReceiptByIdAPI,
+} from '@/services/order'
 import type { OrderResult } from '@/types/order'
 import { onLoad, onReady } from '@dcloudio/uni-app'
 import { ref } from 'vue'
@@ -86,7 +92,53 @@ const getOrderById = async () => {
   const res = await getMemberOrderByIdAPI(query.id)
   order.value = res.result
 }
+// 骨架屏
 const isShowSkeleton = ref(false)
+
+// 倒计时结束事件
+const onTimeup = () => {
+  // 修改订单状态为已取消
+  order.value!.orderState = OrderState.YiQuXiao
+}
+// 订单支付
+const onOrderPay = async () => {
+  // 通过环境变量区分开发环境
+  if (import.meta.env.DEV) {
+    // 开发环境：模拟支付，修改订单状态为已支付
+    await getPayMockAPI({ orderId: query.id })
+  } else {
+    // 生产环境：获取支付参数 + 发起微信支付
+    const res = await getPayWxPayMiniPayAPI({ orderId: query.id })
+    await wx.requestPayment(res.result)
+    console.log(res)
+  }
+  // 关闭当前页，再跳转支付结果页
+  uni.redirectTo({ url: `/pagesOrder/payment/payment?id=${query.id}` })
+}
+const isDev = import.meta.env.DEV
+// 模拟发货
+const onOrderSend = async () => {
+  if (isDev) {
+    await getMemberOrderConsignmentByIdAPI(query.id)
+    uni.showToast({ icon: 'success', title: '模拟发货完成' })
+    // 主动更新订单状态
+    order.value!.orderState = OrderState.DaiShouHuo
+  }
+}
+// 确认收货
+const onOrderConfirm = () => {
+  // 二次确认弹窗
+  uni.showModal({
+    content: '为保障您的权益，请收到货并确认无误后，再确认收货',
+    success: async (success) => {
+      if (success.confirm) {
+        const res = await putMemberOrderReceiptByIdAPI(query.id)
+        // 更新订单状态
+        order.value = res.result
+      }
+    },
+  })
+}
 onLoad(async () => {
   isShowSkeleton.value = false
   await Promise.all([getOrderById()])
@@ -118,9 +170,16 @@ onLoad(async () => {
           <view class="tips">
             <text class="money">应付金额: ¥ {{ order.payMoney }}</text>
             <text class="time">支付剩余</text>
-            00 时 29 分 59 秒
+            <uni-countdown
+              :second="order.countdown"
+              color="#fff"
+              splitor-color="#fff"
+              :show-day="false"
+              :show-colon="false"
+              @timeup="onTimeup"
+            />
           </view>
-          <view class="button">去支付</view>
+          <view class="button" @tap="onOrderPay">去支付</view>
         </template>
         <!-- 其他订单状态:展示再次购买按钮 -->
         <template v-else>
@@ -135,7 +194,21 @@ onLoad(async () => {
               再次购买
             </navigator>
             <!-- 待发货状态：模拟发货,开发期间使用,用于修改订单状态为已发货 -->
-            <view v-if="false" class="button"> 模拟发货 </view>
+            <view
+              v-if="isDev && order?.orderState == OrderState.DaiFaHuo"
+              @tap="onOrderSend"
+              class="button"
+            >
+              模拟发货
+            </view>
+            <!-- 待收货状态: 展示确认收货按钮 -->
+            <view
+              v-if="order?.orderState === OrderState.DaiShouHuo"
+              @tap="onOrderConfirm"
+              class="button"
+            >
+              确认收货
+            </view>
           </view>
         </template>
       </view>

@@ -10,7 +10,7 @@ import type { PageParams } from '@/types/global'
 const guessLikeList = ref<GuessItem>([])
 // 分页参数
 const pageParams: Required<PageParams> = {
-  page: 30,
+  page: 1,
   pageSize: 10,
 }
 // 触底更新

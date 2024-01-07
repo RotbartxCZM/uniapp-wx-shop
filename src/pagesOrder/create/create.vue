@@ -1,5 +1,10 @@
 <script setup lang="ts">
-import { getMemberOrderPreAPI, getMemberOrderPreNowAPI, postMemberOrderAPI } from '@/services/order'
+import {
+  getMemberOrderPreAPI,
+  getMemberOrderPreNowAPI,
+  getMemberOrderRepurchaseByIdAPI,
+  postMemberOrderAPI,
+} from '@/services/order'
 import { userAddressStore } from '@/stores/modules/address'
 import type { OrderPreResult } from '@/types/order'
 import { onLoad } from '@dcloudio/uni-app'
@@ -28,6 +33,7 @@ const onChangeDelivery: UniHelper.SelectorPickerOnChange = (ev) => {
 const query = defineProps<{
   skuId?: string
   count?: string
+  orderId?: string
 }>()
 
 // 获取购物车订单
@@ -38,6 +44,10 @@ const getCartList = async () => {
       skuId: query.skuId,
       count: query.count,
     })
+    orderList.value = res.result
+  } else if (query.orderId) {
+    // 再次购买
+    const res = await getMemberOrderRepurchaseByIdAPI(query.orderId)
     orderList.value = res.result
   } else {
     const res = await getMemberOrderPreAPI()
